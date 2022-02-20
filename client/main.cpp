@@ -158,6 +158,7 @@ int connect_to_peer(P2PClient &client, uint32_t index)
     if (ret > 0) {
         LOGI("success connect: [%s:%d] %s", inet_ntoa(serverAddr.sin_addr), ntohs(serverAddr.sin_port), buf);
     }
+    ::sendto(udpSock, buf, sizeof(buf), 0, (sockaddr *)&serverAddr, sizeof(serverAddr));
 
     return udpSock;
 }
@@ -271,28 +272,24 @@ int main(int argc, char **argv)
                 LOGI("%s() recv size %d, flag = 0x%x", __func__, ret, res.flag);
                 if (ret > 0 && res.flag == P2P_FLAG_RESPONSE_CONNECT_TO_ME) {
                     P2P_Connect conn = res.conn;
-                    uint32_t host = ntohl(conn.host_binary);
-                    uint16_t port = ntohs(conn.port_binary);
-                    LOGI("peer: %s:%d [%s:%d]", inet_ntoa({conn.host_binary}), ntohs(conn.port_binary),
-                        inet_ntoa({host}), ntohs(port));
+                    LOGI("peer: %s:%d", inet_ntoa({conn.host_binary}), ntohs(conn.port_binary));
                     sockaddr_in addr;
                     addr.sin_addr.s_addr = conn.host_binary;
                     addr.sin_family = AF_INET;
                     addr.sin_port = conn.port_binary;
 
                     sendto(udpSock, "hello world!", 12, 0, (sockaddr *)&addr, sizeof(addr));
-                    client.recv(&res, sizeof(res));
                 }
             }
 
             if (event.data.fd == udpSock) {
                 sockaddr_in addr;
-                socklen_t len;
+                socklen_t len = sizeof(addr);
                 char buf[128] = {0};
                 int ret = recvfrom(udpSock, buf, sizeof(buf), 0, (sockaddr *)&addr, &len);
                 LOGI("ret = %d", ret);
                 if (ret > 0) {
-                    LOGI("buf = %s", buf);
+                    LOGI("[%s:%d] buf: %s", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port), buf);
                 }
             }
         }
