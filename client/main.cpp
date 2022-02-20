@@ -150,6 +150,8 @@ int connect_to_peer(P2PClient &client, uint32_t index)
 
     LOGI("sendto %s:%d success. %d", UDP_SERVER_IP, UDP_SERVER_PORT, ret);
 
+    len = sizeof(serverAddr);
+    memset(&serverAddr, 0, len);
     uint8_t buf[128] = {0};
     ret = ::recvfrom(udpSock, buf, sizeof(buf), 0, (sockaddr *)&serverAddr, &len);
     LOGD("ret = %d", ret);
